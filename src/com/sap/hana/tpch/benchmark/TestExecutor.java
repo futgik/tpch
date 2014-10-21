@@ -1,5 +1,6 @@
 package com.sap.hana.tpch.benchmark;
 
+import com.sap.hana.tpch.benchmark.results.*;
 import com.sap.hana.tpch.exception.PrepException;
 import com.sap.hana.tpch.exception.TestException;
 import com.sap.hana.tpch.remoute.EnvPreparationMonitor;
@@ -74,11 +75,16 @@ public class TestExecutor {
      * @return result of test execution.
      * @throws TestException
      */
-    public TestResults.TPCHMetrics doTPCBenchmark() throws TestException{
+    public TPCHMetrics doTPCBenchmark() throws TestException{
         prepareTest(TPCHBenchmark.class);
         TPCHBenchmark benchmark = new TPCHBenchmark(scaleFactor, refreshFilePart.next());
-        runModifiableTest(benchmark);
-        return benchmark.getResults();
+        return runModifiableTest(benchmark);
+    }
+
+    public TPCHSeriesMetrics doTPCHSeriesBenchmark(int testRunCount) throws  TestException{
+        prepareTest(TPCHBenchmark.class,testRunCount);
+        TPCHSeriesBenchmark benchmark = new TPCHSeriesBenchmark(scaleFactor,testRunCount,refreshFilePart);
+        return runModifiableTest(benchmark);
     }
 
     /**
@@ -87,11 +93,10 @@ public class TestExecutor {
      * @return result of query execution.
      * @throws TestException
      */
-    public TestResults.SingleQueryTestResults doSingleQueryTest(Queries.Query query) throws TestException{
+    public SingleQueryTestResults doSingleQueryTest(Queries.Query query) throws TestException{
         prepareTest(SingleQueryTest.class);
         SingleQueryTest queryTest = new SingleQueryTest(scaleFactor, query);
-        runUnmodifiableTest(queryTest);
-        return queryTest.getResults();
+        return runUnmodifiableTest(queryTest);
     }
 
     /**
@@ -99,11 +104,10 @@ public class TestExecutor {
      * @return result of power test execution.
      * @throws TestException
      */
-    public TestResults.PowerTestResults doPowerTest() throws TestException{
+    public PowerTestResults doPowerTest() throws TestException{
         prepareTest(PowerTest.class);
         PowerTest powerTest = new PowerTest(scaleFactor, refreshFilePart.next());
-        runModifiableTest(powerTest);
-        return powerTest.getResults();
+        return runModifiableTest(powerTest);
     }
 
     /**
@@ -111,11 +115,10 @@ public class TestExecutor {
      * @return result of test execution.
      * @throws TestException
      */
-    public TestResults.ThroughputTestResults doThroughputTest() throws TestException{
+    public ThroughputTestResults doThroughputTest() throws TestException{
         prepareTest(LoadHanaTest.class);
         LoadHanaTest loadHanaTest = new LoadHanaTest(scaleFactor, refreshFilePart.next());
-        runModifiableTest(loadHanaTest);
-        return loadHanaTest.getResults();
+        return runModifiableTest(loadHanaTest);
     }
 
     /**
@@ -123,20 +126,20 @@ public class TestExecutor {
      * @return result of test execution.
      * @throws TestException
      */
-    public TestResults.RefreshResults doRefreshTest() throws TestException{
+    public RefreshResults doRefreshTest() throws TestException{
         prepareTest(RefreshTest.class);
         RefreshTest refreshTest = new RefreshTest(refreshFilePart.next());
         runModifiableTest(refreshTest);
         return refreshTest.getResults();
     }
 
-    private void runUnmodifiableTest(HanaTest test) throws TestException{
-        test.run(new InnerBenchmarkProcessMonitor());
+    private <T extends TestResult> T runUnmodifiableTest(HanaTest test) throws TestException{
+        return (T)test.run(new InnerBenchmarkProcessMonitor());
     }
 
-    private void runModifiableTest(HanaTest test) throws TestException{
+    private <T extends TestResult> T runModifiableTest(HanaTest test) throws TestException{
         try{
-            test.run(new InnerBenchmarkProcessMonitor());
+            return (T)test.run(new InnerBenchmarkProcessMonitor());
         }finally {
             DatabaseState.resetState();
         }
@@ -159,18 +162,28 @@ public class TestExecutor {
      * @return Object for carrying out test.
      */
     private <T extends HanaTest> void prepareTest(Class<T> testType) throws TestException{
+        prepareTest(testType,1);
+    }
+
+    /**
+     * Some preparations of database for setting initial state and generating refresh data.
+     * @param testType type of required test.
+     * @param <T> contain type of test.
+     * @return Object for carrying out test.
+     */
+    private <T extends HanaTest> void prepareTest(Class<T> testType, int testRunCount) throws TestException{
         if(testType == SingleQueryTest.class){
             prepareDatabase();
         }
         else {
             prepareDatabase();
-            prepareTestData((Class<HanaTest>) testType);
+            prepareTestData((Class<HanaTest>) testType, testRunCount);
         }
     }
 
-    private void prepareTestData(Class<HanaTest> testType) throws TestException{
+    private void prepareTestData(Class<HanaTest> testType, int testRunCount) throws TestException{
         try {
-            refreshFilePart = RefreshDataPreparation.prepareData(scaleFactor, testType, 1, new InnerPreparationMonitor());
+            refreshFilePart = RefreshDataPreparation.prepareData(scaleFactor, testType, testRunCount, new InnerPreparationMonitor());
         }catch(PrepException e){
             throw new TestException(e);
         }

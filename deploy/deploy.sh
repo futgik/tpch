@@ -3,7 +3,7 @@
 #check if environment already exist.
 #environment consist of test scripts, generate .sql queries scripts and dbgen to generate data table.
 function environmentNotExist(){
-	FARRAY=(dbgen/dbgen dbgen/dists.dss tests/alter_user.sh tests/count.sh tests/load_hana.sh tests/power_test.sh tests/prepare_queries.sh tests/q1.sh tests/q2.sh tests/q3.sh tests/q4.sh tests/q5.sh tests/q6.sh tests/q7.sh tests/q8.sh tests/q9.sh tests/q10.sh tests/q11.sh tests/q12.sh tests/q13.sh tests/q14.sh tests/q15.sh tests/q16.sh tests/q17.sh tests/q18.sh tests/q19.sh tests/q20.sh tests/q21.sh tests/q22.sh tests/refresh.sh tests/refresh_gen.sh tests/rf1.sh tests/rf2.sh tests/streams_matrix.csv)
+	FARRAY=(dbgen/dbgen dbgen/dists.dss tests/alter_user.sh tests/count.sh tests/delete_queries.sh tests/load_hana.sh tests/power_test.sh tests/prepare_queries.sh tests/q1.sh tests/q2.sh tests/q3.sh tests/q4.sh tests/q5.sh tests/q6.sh tests/q7.sh tests/q8.sh tests/q9.sh tests/q10.sh tests/q11.sh tests/q12.sh tests/q13.sh tests/q14.sh tests/q15.sh tests/q16.sh tests/q17.sh tests/q18.sh tests/q19.sh tests/q20.sh tests/q21.sh tests/q22.sh tests/refresh.sh tests/refresh_resource_optimize_clear.sh tests/refresh_resource_optimize_gen.sh tests/refresh_time_optimize_clear.sh tests/refresh_time_optimize_gen.sh tests/rf1.sh tests/rf2_resource_optimize_sql_gen.sh tests/rf2_test.sh tests/rf2_time_optimize_sql_gen.sh tests/streams_matrix.csv)
 
 	CHECK=0
 	for f in ${FARRAY[*]} ; do

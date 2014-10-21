@@ -1,10 +1,9 @@
 package com.sap.hana.tpch.benchmark;
 
+import com.sap.hana.tpch.benchmark.results.RefreshResults;
 import com.sap.hana.tpch.config.Configurations;
 import com.sap.hana.tpch.exception.LoadResultException;
 import com.sap.hana.tpch.exception.TestException;
-
-import javax.security.auth.login.Configuration;
 
 /**
  * Created by Alex on 01/10/2014.
@@ -21,8 +20,8 @@ public class RefreshTest extends BaseTest {
     }
 
     @Override
-    public void run(BenchmarkProcessMonitor monitor) throws TestException {
-        super.run(monitor);
+    public RefreshResults run(BenchmarkProcessMonitor monitor) throws TestException {
+        return super.run(monitor);
     }
 
     @Override
@@ -36,9 +35,9 @@ public class RefreshTest extends BaseTest {
     }
 
     @Override
-    public TestResults.RefreshResults getResults() throws TestException{
+    public RefreshResults getResults() throws TestException{
         try {
-            return new TestResults.RefreshResults(getOutputFileName());
+            return new RefreshResults(getOutputFileName());
 
         } catch (LoadResultException e) {
             throw new TestException(String.format("Can't load test results from file %s",getOutputFileName()), e);

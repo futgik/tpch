@@ -1,5 +1,6 @@
 package com.sap.hana.tpch.benchmark;
 
+import com.sap.hana.tpch.benchmark.results.TestResult;
 import com.sap.hana.tpch.config.Configurations;
 import com.sap.hana.tpch.exception.ExecutionException;
 import com.sap.hana.tpch.exception.TestException;
@@ -24,14 +25,13 @@ public abstract class BaseTest implements HanaTest{
      * @throws TestException Exception in process.
      */
     @Override
-    public void run(final BenchmarkProcessMonitor monitor) throws TestException {
+    public <T extends TestResult> T run(final BenchmarkProcessMonitor monitor) throws TestException {
         if(!isReadyToRun()) throw new TestException("Database was modified and now is not ready");
         String executionString = String.format("cd %s && ./%s.sh %s %s %s",
                 Configurations.SERVER_TEST_DIR, getTestFileName(), getTestParams(), Configurations.TPCH_USER, Configurations.TPCH_PWD);
         try {
             if(monitor == null){
-                runWithoutMonitor(executionString);
-                return;
+                return runWithoutMonitor(executionString);
             }
             monitor.prepare(getTestName());
             RemoteExecutor.getRemoteCommandExecutor().execCommand(executionString, new SSHProcessMonitor() {
@@ -54,10 +54,16 @@ public abstract class BaseTest implements HanaTest{
             throw new TestException(String.format("error occurred while making %s", getTestName().toLowerCase()),e);
         }
         monitor.end();
+        return getResults();
     }
 
-    private void runWithoutMonitor(String executionCommand) throws ExecutionException{
-        RemoteExecutor.getRemoteCommandExecutor().execCommand(executionCommand);
+    private <T extends TestResult> T runWithoutMonitor(String executionCommand) throws TestException{
+        try {
+            RemoteExecutor.getRemoteCommandExecutor().execCommand(executionCommand);
+        } catch (ExecutionException e) {
+            throw new TestException(String.format("error occurred while making %s", getTestName().toLowerCase()),e);
+        }
+        return getResults();
     }
 
     /**

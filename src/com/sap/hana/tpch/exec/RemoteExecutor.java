@@ -375,7 +375,7 @@ public class RemoteExecutor {
                         }
                         if (channel.isClosed()) {
                             if (in.available() > 0) continue;
-                            System.out.println("exit-status: "+channel.getExitStatus());
+                            if(Configurations.DEBUG) System.out.println("exit-status: "+channel.getExitStatus());
                             break;
                         }
                         try{

@@ -83,6 +83,5 @@ public class Configurations {
     public static final String MYSQL_ADM_PWD = "alex123";
     public static final String MYSQL_URL = "jdbc:mysql://%s/?user=%s&password=%s";
 
-    public final static boolean DEBUG = java.lang.management.ManagementFactory.getRuntimeMXBean().
-            getInputArguments().toString().contains("jdwp");
+    public final static boolean DEBUG = java.lang.management.ManagementFactory.getRuntimeMXBean().getInputArguments().toString().contains("jdwp");
 }

@@ -1,5 +1,6 @@
 package com.sap.hana.tpch.benchmark;
 
+import com.sap.hana.tpch.benchmark.results.TPCHMetrics;
 import com.sap.hana.tpch.exception.TestException;
 import com.sap.hana.tpch.types.ScaleFactor;
 
@@ -24,15 +25,16 @@ public class TPCHBenchmark implements HanaTest{
     }
 
     @Override
-    public void run(BenchmarkProcessMonitor monitor) throws TestException {
+    public TPCHMetrics run(BenchmarkProcessMonitor monitor) throws TestException {
         if(!DatabaseState.isDatabaseReady()) throw new TestException("Database was modified and now is not ready");
         powerTest.run(monitor);
         loadHanaTest.run(monitor);
+        return getResults();
     }
 
     @Override
-    public TestResults.TPCHMetrics getResults() throws TestException {
-        return new TestResults.TPCHMetrics(powerTest.getResults(),loadHanaTest.getResults(),scaleFactor);
+    public TPCHMetrics getResults() throws TestException {
+        return new TPCHMetrics(powerTest.getResults(),loadHanaTest.getResults(),scaleFactor);
     }
 
     @Override

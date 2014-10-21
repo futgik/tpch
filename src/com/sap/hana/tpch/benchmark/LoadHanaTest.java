@@ -1,5 +1,6 @@
 package com.sap.hana.tpch.benchmark;
 
+import com.sap.hana.tpch.benchmark.results.ThroughputTestResults;
 import com.sap.hana.tpch.config.Configurations;
 import com.sap.hana.tpch.exception.LoadResultException;
 import com.sap.hana.tpch.exception.TestException;
@@ -28,8 +29,8 @@ public class LoadHanaTest extends BaseTest{
     }
 
     @Override
-    public void run(BenchmarkProcessMonitor monitor) throws TestException {
-        super.run(monitor);
+    public ThroughputTestResults run(BenchmarkProcessMonitor monitor) throws TestException {
+        return super.run(monitor);
     }
 
     /**
@@ -45,9 +46,9 @@ public class LoadHanaTest extends BaseTest{
     }
 
     @Override
-    public TestResults.ThroughputTestResults getResults() throws TestException {
+    public ThroughputTestResults getResults() throws TestException {
         try {
-            return new TestResults.ThroughputTestResults(getOutputFileName());
+            return new ThroughputTestResults(getOutputFileName());
 
         } catch (LoadResultException e) {
             throw new TestException(String.format("Can't load test results from file %s",getOutputFileName()), e);

@@ -1,5 +1,6 @@
 package com.sap.hana.tpch.benchmark;
 
+import com.sap.hana.tpch.benchmark.results.TestResult;
 import com.sap.hana.tpch.exception.TestException;
 
 /**
@@ -12,7 +13,7 @@ public interface HanaTest {
      * Run test.
      * @throws TestException exception in process of test execution.
      */
-    public void run(BenchmarkProcessMonitor monitor) throws TestException;
+    public <T extends TestResult> T run(BenchmarkProcessMonitor monitor) throws TestException;
 
     /**
      * Get test results.
@@ -20,7 +21,7 @@ public interface HanaTest {
      * Each implementation of interface can return specific data type which implement TestResult.
      * @throws TestException Exception while preparing test result;
      */
-    public TestResults.TestResult getResults() throws TestException;
+    public <T extends TestResult> T getResults() throws TestException;
 
     /**
      * Get name of tpch test.

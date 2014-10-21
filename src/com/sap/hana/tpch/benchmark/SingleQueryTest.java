@@ -1,5 +1,8 @@
 package com.sap.hana.tpch.benchmark;
 
+import com.sap.hana.tpch.benchmark.results.Queries;
+import com.sap.hana.tpch.benchmark.results.RefreshResults;
+import com.sap.hana.tpch.benchmark.results.SingleQueryTestResults;
 import com.sap.hana.tpch.config.Configurations;
 import com.sap.hana.tpch.exception.LoadResultException;
 import com.sap.hana.tpch.exception.TestException;
@@ -66,9 +69,14 @@ public class SingleQueryTest extends BaseTest {
     }
 
     @Override
-    public TestResults.SingleQueryTestResults getResults() throws TestException {
+    public SingleQueryTestResults run(BenchmarkProcessMonitor monitor) throws TestException {
+        return super.run(monitor);
+    }
+
+    @Override
+    public SingleQueryTestResults getResults() throws TestException {
         try {
-            return new TestResults.SingleQueryTestResults(getOutputFileName());
+            return new SingleQueryTestResults(getOutputFileName());
 
         } catch (LoadResultException e) {
             throw new TestException(String.format("Can't load test results from file %s",getOutputFileName()), e);

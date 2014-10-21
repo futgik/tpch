@@ -1,5 +1,6 @@
 package com.sap.hana.tpch.benchmark;
 
+import com.sap.hana.tpch.benchmark.results.PowerTestResults;
 import com.sap.hana.tpch.config.Configurations;
 import com.sap.hana.tpch.exception.LoadResultException;
 import com.sap.hana.tpch.exception.TestException;
@@ -26,14 +27,14 @@ public class PowerTest extends BaseTest {
     }
 
     @Override
-    public void run(BenchmarkProcessMonitor monitor) throws TestException {
-        super.run(monitor);
+    public PowerTestResults run(BenchmarkProcessMonitor monitor) throws TestException {
+        return super.run(monitor);
     }
 
     @Override
-    public TestResults.PowerTestResults getResults() throws TestException{
+    public PowerTestResults getResults() throws TestException{
         try {
-            return new TestResults.PowerTestResults(getOutputFileName());
+            return new PowerTestResults(getOutputFileName());
 
         } catch (LoadResultException e) {
             throw new TestException(String.format("Can't load test results from file %s",getOutputFileName()), e);

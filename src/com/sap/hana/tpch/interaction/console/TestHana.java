@@ -1,15 +1,17 @@
 package com.sap.hana.tpch.interaction.console;
 
 import com.sap.hana.tpch.benchmark.*;
+import com.sap.hana.tpch.benchmark.results.*;
 import com.sap.hana.tpch.checks.Checks;
+import com.sap.hana.tpch.exception.ExportException;
 import com.sap.hana.tpch.exception.TestException;
+import com.sap.hana.tpch.export.ExcelExport;
 import com.sap.hana.tpch.remoute.*;
 import com.sap.hana.tpch.remoute.hana.HDBBinaryPreparation;
 import com.sap.hana.tpch.remoute.hana.HDBDBGenPreparation;
 import com.sap.hana.tpch.types.ScaleFactor;
 
 import java.util.*;
-import java.util.concurrent.Executor;
 
 /**
  * Created by Alex on 29/09/2014.
@@ -73,8 +75,31 @@ public class TestHana {
                 case "single":
                     makeSingleTest();
                     break;
+                case "tpch_series":
+                    makeTPCHSeries();
+
             }
             inputCommand();
+        }
+    }
+
+    private static void makeTPCHSeries() {
+        System.out.println(String.format("Executing series of tpch tests"));
+        try{
+            if(scaleFactor == null)
+                scaleFactor = setScaleFactor();
+            int repetitionCount = setRepetitionCount();
+            TPCHSeriesMetrics m = TestExecutor.getTestExecutor(scaleFactor, new ConsoleBenchmarkProcessMonitor()).doTPCHSeriesBenchmark(repetitionCount);
+            System.out.println(String.format("Power size: %f",m.getAveragedPowerSize()));
+            System.out.println(String.format("Throughput size: %f",m.getAveragedThroughputSize()));
+            System.out.println(String.format("QphH size: %f",m.getAveragedQphHSize()));
+            ExcelExport.exportTPCHSeriesToTemplate(m);
+        } catch (TestException e) {
+            System.out.println(e.getMessage());
+            System.out.println(e.getCause());
+            e.printStackTrace();
+        }catch (ExportException e){
+            e.printStackTrace();
         }
     }
 
@@ -93,7 +118,7 @@ public class TestHana {
             Queries.Query q = Queries.getQueryByFileName(user_input.nextLine());
             if(scaleFactor == null)
                 scaleFactor = setScaleFactor();
-            TestResults.SingleQueryTestResults results = TestExecutor.getTestExecutor(scaleFactor,new ConsoleBenchmarkProcessMonitor()).doSingleQueryTest(q);
+            SingleQueryTestResults results = TestExecutor.getTestExecutor(scaleFactor,new ConsoleBenchmarkProcessMonitor()).doSingleQueryTest(q);
             System.out.println("Test "+q.getQueryName()+" executed in: "+results.getEstimation()+" s.");
         }catch (Exception e) {
             System.out.println(e.getMessage());
@@ -107,7 +132,7 @@ public class TestHana {
         try{
             if(scaleFactor == null)
                 scaleFactor = setScaleFactor();
-            TestResults.RefreshResults tr = TestExecutor.getTestExecutor(scaleFactor,new ConsoleBenchmarkProcessMonitor()).doRefreshTest();
+            RefreshResults tr = TestExecutor.getTestExecutor(scaleFactor,new ConsoleBenchmarkProcessMonitor()).doRefreshTest();
             printQueriesTimes(tr.getQueryTimeList());
             System.out.println(String.format("sum query time: %f s.",tr.getSumQueryTime()));
         } catch (TestException e) {
@@ -122,7 +147,7 @@ public class TestHana {
         try{
             if(scaleFactor == null)
                 scaleFactor = setScaleFactor();
-            TestResults.ThroughputTestResults tr = TestExecutor.getTestExecutor(scaleFactor,new ConsoleBenchmarkProcessMonitor()).doThroughputTest();
+            ThroughputTestResults tr = TestExecutor.getTestExecutor(scaleFactor,new ConsoleBenchmarkProcessMonitor()).doThroughputTest();
             System.out.println(String.format("query execute in %f s.",tr.getEstimation()));
         } catch (TestException e) {
             System.out.println(e.getMessage());
@@ -136,7 +161,7 @@ public class TestHana {
         try {
             if(scaleFactor == null)
                 scaleFactor = setScaleFactor();
-            TestResults.PowerTestResults ptr = TestExecutor.getTestExecutor(scaleFactor, new ConsoleBenchmarkProcessMonitor()).doPowerTest();
+            PowerTestResults ptr = TestExecutor.getTestExecutor(scaleFactor, new ConsoleBenchmarkProcessMonitor()).doPowerTest();
             printQueriesTimes(ptr.getQueryTimeList());
             System.out.println(System.out.format("sum query time: %f s.", ptr.getSumQueryTime()));
         } catch (TestException e) {
@@ -158,24 +183,30 @@ public class TestHana {
         try{
             if(scaleFactor == null)
                 scaleFactor = setScaleFactor();
-            TestResults.TPCHMetrics m = TestExecutor.getTestExecutor(scaleFactor, new ConsoleBenchmarkProcessMonitor()).doTPCBenchmark();
+
+            TPCHMetrics m = TestExecutor.getTestExecutor(scaleFactor, new ConsoleBenchmarkProcessMonitor()).doTPCBenchmark();
             System.out.println(String.format("Power size: %f",m.getPowerSize()));
             System.out.println(String.format("Throughput size: %f",m.getThroughputSize()));
             System.out.println(String.format("QphH size: %f",m.getQphHSize()));
+            ExcelExport.exportTPCHToTemplate(m);
         } catch (TestException e) {
             System.out.println(e.getMessage());
             System.out.println(e.getCause());
+            e.printStackTrace();
+        } catch (ExportException e){
             e.printStackTrace();
         }
     }
 
     private static void showHanaTestList() {
+        System.out.println("q - exit test mode");
         System.out.println("Available Hana test list:");
-        System.out.println("tpch - tpch metrics");
-        System.out.println("power - power test");
-        System.out.println("load - load test");
-        System.out.println("refresh - refresh test");
-        System.out.println("single - test single query");
+        System.out.println("tpch - run tpch single test");
+        System.out.println("power - run power test");
+        System.out.println("load - run load test");
+        System.out.println("refresh - run refresh test");
+        System.out.println("single  - run single query");
+        System.out.println("tpch_series - run tpch test sequence");
     }
 
     public static void hanaDeploy(){
@@ -244,19 +275,35 @@ public class TestHana {
 
     public static ScaleFactor setScaleFactor(){
         ScaleFactor sf;
+        try{
+            sf = new ScaleFactor(getIntFromPrint("Please enter scale factor (1/30/100/300/1000/3000/10000/30000/100000): ", "Invalid scale factor value"));
+            return sf;
+        }
+        catch (Exception e){
+            System.out.println("Invalid scale factor value");
+        }
+        setScaleFactor();
+        return null;
+    }
+
+    public static int setRepetitionCount(){
+        return getIntFromPrint("Please enter how much run test: ", "You enter invalid value");
+    }
+
+    public static int getIntFromPrint(String helloMessage, String invalidPrintMessage){
+        int value;
         while(true){
-            System.out.print("Please enter scale factor (1/30/100/300/1000/3000/10000/30000/100000): ");
+            System.out.print(helloMessage);
             Scanner user_input = new Scanner(System.in);
-            String scaleFactor = user_input.next();
             try {
-                sf = new ScaleFactor(Integer.parseInt(scaleFactor));
+                value = Integer.parseInt(user_input.next());
                 break;
             }
             catch (Exception e){
-                System.out.println("Invalid scale factor value");
+                System.out.println(invalidPrintMessage);
             }
         }
-        return sf;
+        return value;
     }
 
     public static void start(){
