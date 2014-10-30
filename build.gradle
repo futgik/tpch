@@ -1,0 +1,48 @@
+apply plugin: 'java'
+apply plugin: 'application'
+
+sourceCompatibility = 1.7
+targetCompatibility = 1.7
+version = '1.0'
+mainClassName = "HanaTPCH"
+
+repositories {
+   flatDir {
+       dirs 'src/main/resources/libs'
+   }
+}
+
+//Project dependencies
+dependencies {
+    compile name: 'jsch-0.1.51'
+	runtime name: 'ngdbc'
+	compile name: 'xmlbeans-2.6.0'
+	compile fileTree(dir: 'src/main/resources/libs/poi-3.11-beta2', include: '*.jar')
+}
+
+task copyFilesTask(type: Copy) {
+    from 'known_hosts'
+	from 'tpch.properties'
+    into 'build/libs/'
+}
+
+task copyTemplatesTask(type: Copy) {
+	from 'templates'
+    into 'build/libs/templates'
+}
+
+task copyDeployTask(type: Copy) {
+	from 'deploy'
+	into 'build/libs/deploy'
+}
+
+task outputCreateTask << {
+	new File('build/libs/export').mkdirs()
+}
+
+jar {
+	dependsOn copyFilesTask, copyTemplatesTask, copyDeployTask, outputCreateTask
+	from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }	
+    manifest.attributes("Main-Class": mainClassName);	
+}
+
